@@ -33,11 +33,11 @@ def download_audio(url: str, tmp_dir: str) -> str:
     return file_path
 
 
-def main(host, port, api, activity):
+def main(host, port, api, api_token, activity):
 
     remote_url = f'http://{host}:{port}/api/method/{api}'
-    #"http://elaexplore.localhost:8081/api/method/ela.ela.doctype.activity.activity.get_submissions"
-    headers = {"Authorization": "token b909eccbd9b04d1:e7515a47bbfad81"}
+    # "http://elaexplore.localhost:8081/api/method/ela.ela.doctype.activity.activity.get_submissions"
+    headers = f'{"Authorization": "token {api_token}"}'
     params = {"activity_eid": activity, "reason": "stt"}
 
     response = requests.get(remote_url, params, headers=headers)
@@ -94,5 +94,6 @@ if __name__ == "__main__":
     host = sys.argv[1]
     port = sys.argv[2]
     api = sys.argv[3]
-    activity = sys.argv[4]
-    main(host, port, api, activity)
+    api_token = sys.argv[4]
+    activity = sys.argv[5]
+    main(host, port, api, api_token, activity)
