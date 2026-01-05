@@ -1,0 +1,43 @@
+# -------- Stage 1: Base ----------
+FROM python:3.10-slim
+
+# Install minimal OS dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ffmpeg \
+        git \
+        build-essential \
+        libsndfile1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set environment variables to reduce size
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+# -------- Stage 2: Python packages ----------
+# Install CPU-only PyTorch first to prevent pulling huge GPU wheels
+RUN pip install --upgrade pip && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install your packages
+RUN pip install \
+        openai-whisper \
+        pyannote.audio \
+        spacy
+
+# Download only small spaCy model
+RUN python -m spacy download en_core_web_sm
+
+# Optional: clean pip cache manually just to be sure
+RUN rm -rf /root/.cache/pip
+
+# Set working directory
+WORKDIR /app
+
+# Copy your project (if any)
+# COPY . /app
+
+# Default command
+CMD ["python3"]
+
