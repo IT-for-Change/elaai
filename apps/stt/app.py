@@ -3,69 +3,29 @@ import requests
 import tempfile
 import os
 import json
+from ela import client as ela_client
+from ela import util as ela_util
 from stt import transcribe
 
-# ------------------------------------------------------------------
-# Stub for your processing function
-# ------------------------------------------------------------------
+OPERATION = "stt"
 
 
-def execute(audio_file_path: str) -> str:
-    # Replace with real logic
-    return f"processed:{os.path.basename(audio_file_path)}"
+def main(activity_id):
 
-
-# ------------------------------------------------------------------
-# Download audio file to a temporary directory
-# ------------------------------------------------------------------
-def download_audio(url: str, tmp_dir: str) -> str:
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-
-    filename = os.path.basename(url)
-    file_path = os.path.join(tmp_dir, filename)
-
-    with open(file_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-
-    return file_path
-
-
-def main(host, port, api, api_token, activity):
-
-    remote_url = f'http://{host}:{port}/api/method/{api}'
-    # "http://elaexplore.localhost:8081/api/method/ela.ela.doctype.activity.activity.get_submissions"
-    headers = f'{"Authorization": "token {api_token}"}'
-    params = {"activity_eid": activity, "reason": "stt"}
-
-    response = requests.get(remote_url, params, headers=headers)
-
-    response.raise_for_status()
+    api_client = ela_client.Client()
+    response = api_client.get_data(activity_id, OPERATION)
     data = response.json()
 
-    # v. important to maintain live context using 'with' for temp directories/files
+    # important to maintain live context using 'with' for temp directories/files
     with tempfile.TemporaryDirectory() as tmp_dir:
-        downloads = []
         # download all audio files first, then transcribe in a loop
-        for item in data.get("message", {}).get("items", []):
-            item_key = item["item_key"]['name']
-            for entry in item.get("entries", []):
-                audio_path = download_audio(entry["source"], tmp_dir)
-
-                downloads.append({
-                    "item_key": item_key,
-                    "entry_key": entry["entry_key"],
-                    "audio_path": audio_path,
-                    "language": entry["language"]
-                })
+        downloads = ela_util.do_download(tmp_dir)
 
         outputs = []
 
-        # after all audio files downloaded, run execute for each
+        # after all audio files downloaded, run diarize for each
         for d in downloads:
-            asr_text, language, confidence = transcribe(
+            asr_text, language, confidence = diarize(
                 d["audio_path"], d["language"])
             outputs.append({
                 "item_key": d["item_key"],
@@ -79,21 +39,9 @@ def main(host, port, api, api_token, activity):
             "outputs": outputs
         }
         print(payload)
-
-        update_response = requests.post(
-            "http://elaexplore.localhost:8081/api/method/ela.ela.doctype.activity.activity.update_submissions",
-            json=payload,
-            headers=headers
-        )
-        # update_response.raise_for_status()
-
-        print({update_response.text})
+        api_client.put_data(payload)
 
 
 if __name__ == "__main__":
-    host = sys.argv[1]
-    port = sys.argv[2]
-    api = sys.argv[3]
-    api_token = sys.argv[4]
-    activity = sys.argv[5]
-    main(host, port, api, api_token, activity)
+    activity_id = sys.argv[1]
+    main(activity_id)

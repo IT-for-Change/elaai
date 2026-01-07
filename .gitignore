@@ -1,3 +1,6 @@
+**/__pycache__/
+files/
+
 apps/stt/models/*.pt
 apps/sdz/models/models--pyannote--speaker-diarization-community-1
 apps/sdz/models/models--pyannote--speaker-diarization-community-1.zip

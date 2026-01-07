@@ -36,6 +36,12 @@ RUN pip install --no-cache-dir \
 # Download spaCy transformer model
 RUN python -m spacy download en_core_web_trf
 
+RUN pip install --no-cache-dir \
+    pydub \
+    librosa
+
+RUN pip install loguru
+
 # Cleanup, just in case!
 RUN rm -rf /root/.cache/pip
 
