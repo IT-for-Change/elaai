@@ -1,1 +1,0 @@
-Download models from OpenAI Whisper into this directory. Model names 'medium.en', 'turbo'.
