@@ -6,7 +6,7 @@ import json
 from loguru import logger
 from ela import client as ela_client
 from ela import util as ela_util
-# from sdz.sdz import diarize, identify_speakers
+from langid.langid import detect_languages
 
 OPERATION = "langid"
 
@@ -32,17 +32,16 @@ def main(activity_id):
         for d in downloads:
             logger.info(
                 f'Performing language check for submission {d["item_key"]} and entry {d["entry_key"]}')
-            # diarization_output = diarize(d["audio_path"])
-            logger.info(diarization_output)
-            logger.info('Running speaker identification')
-            speakers_info = identify_speakers(diarization_output,
-                                              d["audio_separation_ref_path"])
-            logger.info(speakers_info)
+            languages_estimation = detect_languages(
+                d["audio_path"], d["language_candidates"])
+            logger.info(
+                f'Completed language check for submission {d["item_key"]} and entry {d["entry_key"]}')
+            logger.info(languages_estimation)
 
             outputs.append({
                 "item_key": d["item_key"],
                 "entry_key": d["entry_key"],
-                "langid": speakers_info
+                "langid": languages_estimation
             })
 
             if len(outputs) > 1:

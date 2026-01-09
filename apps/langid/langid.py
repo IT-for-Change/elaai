@@ -1,9 +1,6 @@
 from collections import defaultdict
-import os
 import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
-from pydub import AudioSegment
-from pydub.silence import detect_silence, split_on_silence
 import librosa
 
 
@@ -12,8 +9,11 @@ processor = WhisperProcessor.from_pretrained(
 model = WhisperForConditionalGeneration.from_pretrained(
     "/apps/files/models/whisper/large-v3-turbo")
 
+device = torch.device("cpu")
+model = model.to(device)
 
-def lang_detect(audio_segment, sr, processor, model, language_tokens, device):
+
+def lang_detect(audio_segment, sr, language_tokens):
 
     input_features = processor(
         audio_segment, sampling_rate=sr, return_tensors="pt").input_features.to(device)
@@ -33,38 +33,6 @@ def lang_detect(audio_segment, sr, processor, model, language_tokens, device):
 
     return lang_probs
 
-
-def m4a_to_mp3(m4a_file):
-    # Load the M4A file into an AudioSegment object
-    audio = AudioSegment.from_file(m4a_file, format="m4a")
-    m4a_file_basename = os.path.splitext(os.path.basename(m4a_file))[0]
-    dir = os.path.dirname(m4a_file)
-    mp3_file = os.path.join(dir, f"{m4a_file_basename}_langid.mp3")
-    audio.export(mp3_file, format="mp3")
-    return mp3_file
-
-
-def preprocess_audio(audio_file_path):
-
-    audio_file_path = m4a_to_mp3(audio_file_path)
-    audio = AudioSegment.from_mp3(audio_file_path)
-
-    silence_thresh = audio.dBFS  # Silence threshold in dB
-    min_silence_len = 100  # Minimum silence length (in milliseconds)
-
-    chunks = split_on_silence(
-        audio,
-        min_silence_len=min_silence_len,
-        silence_thresh=silence_thresh)
-
-    preprocessed_audio = AudioSegment.empty()
-    for chunk in chunks:
-        preprocessed_audio += chunk
-
-    preprocessed_audio.export(audio_file_path, format="mp3")
-
-    return audio_file_path
-
 # CHECK THIS 9/apr/2025
 # https://discuss.huggingface.co/t/language-detection-with-whisper/26003/14
 # https://huggingface.co/openai/whisper-large-v2/discussions/40
@@ -72,19 +40,22 @@ def preprocess_audio(audio_file_path):
 # TODO
 
 
-def lang_detect(audio, sr, processor, model, language_tokens, segment_duration=30):
+def lang_detect_in_segments(audio, sr, language_tokens, segment_duration=30):
 
+    if segment_duration == 0:
+        lang_probs = lang_detect(audio, sr, language_tokens)
+        return lang_probs
+
+    # else, split into segments for sampling
     segment_length = int(segment_duration * sr)
     segments = [audio[i:i + segment_length]
                 for i in range(0, len(audio), segment_length)]
 
     overall_probs = defaultdict(float)
-    device = torch.device("cpu")
-    model = model.to(device)
 
     for i, segment in enumerate(segments):
         lang_probs = lang_detect(
-            segment, sr, processor, model, language_tokens, device)
+            segment, sr, language_tokens)
 
         for lang, prob in lang_probs.items():
             overall_probs[lang] += prob
@@ -96,34 +67,23 @@ def lang_detect(audio, sr, processor, model, language_tokens, segment_duration=3
     return dict(overall_probs)
 
 
-def detect_languages(audio_path, preprocess=False):
+def detect_languages(audio_path, language_candidates, spreprocess=False):
 
     # add english!
-    language_codes.insert(0, 'en')
-    language_tokens = [f'<|{code}|>' for code in language_codes]
-    audio_path = submission.media
-    print(f'Processing {audio_path} with language codes {language_codes}')
-    threshold = 0.15
-
-    if (preprocess):
-        # preprocessing:
-        # convert to mp3 and remove silences to improve accuracy of detection.
-        # Silence removal is emperically observed to improve lang id accuracy significantly
-        # this may not be required for conversation activities since the pyannote pipeline does a good job
-        # of removing trailing silences between speaker turns.
-
-        # audio_path = preprocess_audio(audio_path)
-        pass
+    language_candidates.insert(0, 'en')
+    language_tokens = [f'<|{code}|>' for code in language_candidates]
+    print(
+        f'Processing {audio_path} with language candidates {language_candidates}')
 
     audio, sr = librosa.load(audio_path, sr=16000)
-    language_probabilities = lang_detect(
-        audio, sr, processor, model, language_tokens)
+    language_probabilities = lang_detect_in_segments(
+        audio, sr, language_tokens, segment_duration=0)
 
-    language_identification = []
+    languages_estimation = []
     for lang_code, prob in language_probabilities.items():
         lang_id = {}
         lang_id['language_code'] = lang_code
         lang_id['confidence'] = round(prob, 2)
-        language_identification.append(lang_id)
+        languages_estimation.append(lang_id)
 
-    return language_identification
+    return {"languages_estimation": languages_estimation}
