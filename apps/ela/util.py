@@ -35,14 +35,18 @@ def do_download(data, directory, operation):
                 entry.get(operation, None).get("source"), directory)
             audio_separation_ref = entry.get(
                 operation, None).get("source_separation_ref")
+            audio_separation_ref_path = None
             if audio_separation_ref != None:
                 audio_separation_ref_path = download_audio(
                     audio_separation_ref, directory)
+            language_candidates = entry[operation].get(
+                "language_candidates", None)
             downloads.append({
                 "item_key": item_key,
                 "entry_key": entry["key"],
                 "audio_path": audio_path,
                 "audio_separation_ref_path": audio_separation_ref_path,
+                "language_candidates": [language_candidates],
                 "language": entry.get("language", None)
             })
     return downloads
