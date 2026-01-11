@@ -31,7 +31,7 @@ def main(activity_id):
         # after all audio files downloaded, run speaker diarization for each
         for d in downloads:
             logger.info(
-                f'Performing language check for submission {d["item_key"]} and entry {d["entry_key"]}')
+                f'Performing language check for submission {d["item_key"]} and entry {d["entry_key"]} with audio {d["audio_path"]}')
             languages_estimation = detect_languages(
                 d["audio_path"], d["language_candidates"])
             logger.info(

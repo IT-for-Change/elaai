@@ -30,7 +30,7 @@ def main(activity_id):
         # after all audio files downloaded, run transcribe for each
         for d in downloads:
             logger.info(
-                f'Performing transcription for submission {d["item_key"]} and entry {d["entry_key"]} in language {d["language"]}')
+                f'Performing transcription for submission {d["item_key"]} and entry {d["entry_key"]} in language {d["language"]} using {d["audio_path"]}')
             transcription_output = transcribe(
                 d["audio_path"], d["language"])
             logger.info(
