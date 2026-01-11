@@ -5,9 +5,9 @@ import librosa
 
 
 processor = WhisperProcessor.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
+    "/apps/files/models/whisper/medium")
 model = WhisperForConditionalGeneration.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
+    "/apps/files/models/whisper/medium")
 
 device = torch.device("cpu")
 model = model.to(device)
