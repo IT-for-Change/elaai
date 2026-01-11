@@ -41,13 +41,15 @@ def do_download(data, directory, operation):
                     audio_separation_ref, directory)
             language_candidates = entry[operation].get(
                 "language_candidates", None)
+            language = entry.get(
+                operation, None).get("language")
             downloads.append({
                 "item_key": item_key,
                 "entry_key": entry["key"],
                 "audio_path": audio_path,
                 "audio_separation_ref_path": audio_separation_ref_path,
                 "language_candidates": [language_candidates],
-                "language": entry.get("language", None)
+                "language": language
             })
     return downloads
 
