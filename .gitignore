@@ -1,6 +1,8 @@
 **/__pycache__/
-files/
+/apps/files/log/*
+/apps/files/submissions/*
+/apps/files/models/pyannote/**
+/apps/files/models/whisper/**
 
-apps/stt/models/*.pt
-apps/sdz/models/models--pyannote--speaker-diarization-community-1
-apps/sdz/models/models--pyannote--speaker-diarization-community-1.zip
+!/apps/files/models/pyannote/.gitkeep
+!/apps/files/models/whisper/.gitkeep
