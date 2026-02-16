@@ -19,8 +19,10 @@ class Client:
         self.api_token = self.config.get("ela_api_token", {})
         self.get_api = self.config.get("ela_get_api", {})
         self.put_api = self.config.get("ela_put_api", {})
-        self.remote_get_api_url = f'http://{self.remote_host}:{self.remote_port}/api/method/{self.get_api}'
-        self.remote_put_api_url = f'http://{self.remote_host}:{self.remote_port}/api/method/{self.put_api}'
+        self.add_file_api = self.config.get("ela_add_file_api", {})
+        self.remote_get_api_url = f'{self.remote_host}:{self.remote_port}/api/method/{self.get_api}'
+        self.remote_put_api_url = f'{self.remote_host}:{self.remote_port}/api/method/{self.put_api}'
+        self.remote_add_file_url = f'{self.remote_host}:{self.remote_port}/{self.add_file_api}'
         # "http://elaexplore.localhost:8081/api/method/ela.ela.doctype.activity.activity.get_submissions"
 
         # if not self.base_url:
@@ -60,8 +62,8 @@ class Client:
             'file': (file_name, open(file_path, 'rb'), 'application/octet-stream')
         }
 
-        url = "http://elaexplore.localhost:8081/api/method/upload_file"
-        response = requests.post(url, headers=headers, data=data, files=files)
+        response = requests.post(
+            self.remote_add_file_url, headers=headers, data=data, files=files)
         response.raise_for_status()
         data = response.json()
         file_id = data['message']['name']
