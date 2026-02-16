@@ -7,13 +7,17 @@ from loguru import logger
 from ela import client as ela_client
 from ela import util as ela_util
 from sdz.sdz import diarize, identify_speakers
+import time
 
 OPERATION = "sdz"
+# logger.add("/apps/files/logs/elaai-sdz.log", level="DEBUG",
+#           rotation="10 MB", compression="zip")
 
 
 def main(activity_id):
 
     logger.info('Initializing client')
+
     api_client = ela_client.Client()
 
     logger.info('Client get_data')
@@ -48,8 +52,8 @@ def main(activity_id):
                 "sdz": speakers_info
             })
 
-            if len(outputs) > 1:
-                break
+            # if len(outputs) > 1:
+            #   break
 
         # print(outputs)
         api_client.put_data(outputs, OPERATION)
