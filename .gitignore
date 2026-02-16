@@ -1,8 +1,12 @@
 **/__pycache__/
+/apps/file
 /apps/files/log/*
+/apps/files/logs/*
 /apps/files/submissions/*
 /apps/files/models/pyannote/**
 /apps/files/models/whisper/**
+/apps/langid/test/**
+/apps/stt/test/**
 
 !/apps/files/models/pyannote/.gitkeep
 !/apps/files/models/whisper/.gitkeep
