@@ -316,6 +316,26 @@ def coord_conjugations(doc):
 '''==== END: NLP TREE PARSER BASED FUNCTIONS ===='''
 
 
+def calculate_lexical_density(lexical_analysis):
+    lexical_density = 0
+    total_words, total_nouns, total_proper_nouns, total_adjectives, total_verbs, total_adverbs = 0, 0, 0, 0, 0, 0
+
+    for properties in lexical_analysis:
+        total_words += len(properties['words'])
+        total_nouns += properties['count_of_nouns']
+        total_proper_nouns += properties['count_of_proper_nouns']
+        total_adjectives += properties['count_of_adjectives']
+        total_verbs += properties['count_of_verbs']
+        total_adverbs += properties['count_of_adverbs']
+
+    total_content_words = total_nouns + total_proper_nouns + \
+        total_adjectives + total_verbs + total_adverbs
+
+    lexical_density = round((100 * total_content_words) / total_words, 0)
+
+    return lexical_density
+
+
 def analyze(doc):
     sentences = doc.sents
     lexical_analysis = []

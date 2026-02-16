@@ -15,6 +15,7 @@ def analyze_text(asr_text, language_code, check_grammar):
     analyzed_text = {
         'token_count': token_count,
         'lang_code': language_code,
+        'lexical_density': 0,
         'lexical_analysis': '',
         'morphological_analysis': '',
         'syntactic_analysis': '',
@@ -26,11 +27,13 @@ def analyze_text(asr_text, language_code, check_grammar):
         doc = nlpfunc.make_doc(asr_text)
         lexical_analysis, syntactic_analysis, morphological_analysis, semantic_analysis = nlpfunc.analyze(
             doc)
+        lexical_density = nlpfunc.calculate_lexical_density(lexical_analysis)
         grammar_analysis = {}
         if (check_grammar == '1'):
             grammar_analysis = nlpfunc.analyze_grammar(doc)
 
         analyzed_text['lexical_analysis'] = lexical_analysis
+        analyzed_text['lexical_density'] = lexical_density
         analyzed_text['syntactic_analysis'] = syntactic_analysis
         analyzed_text['morphological_analysis'] = morphological_analysis
         analyzed_text['semantic_analysis'] = semantic_analysis
