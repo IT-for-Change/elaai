@@ -44,8 +44,8 @@ def main(activity_id):
                 "langid": languages_estimation
             })
 
-            if len(outputs) > 1:
-                break
+            # if len(outputs) > 1:
+            #   break
 
         # print(outputs)
         api_client.put_data(outputs, OPERATION)

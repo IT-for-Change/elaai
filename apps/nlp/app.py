@@ -47,11 +47,7 @@ def main(activity_id):
                 "nlp": analyzed_text
             })
 
-        if len(outputs) > 1:
-            logger.info('Reached outputs > 1')
-            break
-
-        # print(outputs)
+        print(outputs)
     api_client.put_data(outputs, OPERATION)
 
 
