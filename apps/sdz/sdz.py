@@ -105,8 +105,8 @@ def separate_speakers(audio_file, teacher_audio_sample_file):
     teacher_speech_segments = []
     learner_speech_segments = []
 
-    learner_duration_ms_total = 0
-    teacher_duration_ms_total = 0
+    learner_duration_total = 0
+    teacher_duration_total = 0
     learner_max_duration = 0
     teacher_max_duration = 0
     total_turns = 0
@@ -139,12 +139,12 @@ def separate_speakers(audio_file, teacher_audio_sample_file):
 
         if cos_sim.item() > 0.25:  # threshold for similarity
             teacher_speech_segments.append(conversation_chunk_tensor)
-            teacher_duration_ms_total += turn_duration
+            teacher_duration_total += turn_duration
             teacher_max_duration = max(
                 turn_duration, teacher_max_duration)
         else:
             learner_speech_segments.append(conversation_chunk_tensor)
-            learner_duration_ms_total += turn_duration
+            learner_duration_total += turn_duration
             learner_max_duration = max(
                 turn_duration, learner_max_duration)
 
@@ -158,10 +158,10 @@ def separate_speakers(audio_file, teacher_audio_sample_file):
 
     speakers_info['audio_filepath_learner'] = audio_path_learner
     speakers_info['audio_filepath_teacher'] = audio_path_teacher
-    speakers_info['learner_duration'] = learner_duration_ms_total
-    speakers_info['learner_max_duration'] = learner_max_duration
-    speakers_info['teacher_duration'] = teacher_duration_ms_total
-    speakers_info['teacher_max_duration'] = teacher_max_duration
+    speakers_info['learner_duration'] = int(learner_duration_total)
+    speakers_info['learner_max_duration'] = int(learner_max_duration)
+    speakers_info['teacher_duration'] = int(teacher_duration_total)
+    speakers_info['teacher_max_duration'] = int(teacher_max_duration)
     speakers_info['total_turns'] = total_turns
 
     return speakers_info
