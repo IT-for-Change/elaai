@@ -40,7 +40,10 @@ RUN pip install --no-cache-dir \
     pydub \
     librosa
 
-RUN pip install loguru
+RUN pip install --no-cache-dir loguru
+RUN pip install --no-cache-dir \
+    torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir silero-vad
 
 # Cleanup, just in case!
 RUN rm -rf /root/.cache/pip

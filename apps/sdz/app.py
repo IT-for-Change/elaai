@@ -6,7 +6,7 @@ import json
 from loguru import logger
 from ela import client as ela_client
 from ela import util as ela_util
-from sdz.sdz import diarize, identify_speakers
+from sdz.sdz import separate_speakers
 import time
 
 OPERATION = "sdz"
@@ -35,12 +35,9 @@ def main(activity_id):
         # after all audio files downloaded, run speaker diarization for each
         for d in downloads:
             logger.info(
-                f'Performing diarize for submission {d["item_key"]} and entry {d["entry_key"]}')
-            diarization_output = diarize(d["audio_path"])
-            logger.info(diarization_output)
-            logger.info('Running speaker identification')
-            speakers_info = identify_speakers(diarization_output,
-                                              d["audio_separation_ref_path"])
+                f'Performing speaker separation and identification for submission {d["item_key"]} and entry {d["entry_key"]}')
+            speakers_info = separate_speakers(
+                d["audio_path"], d["audio_separation_ref_path"])
             logger.info(speakers_info)
             file_id = api_client.send_file(
                 speakers_info['audio_filepath_learner'])
