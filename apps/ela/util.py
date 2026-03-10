@@ -41,6 +41,10 @@ def do_download(data, directory, operation):
                     audio_separation_ref, directory)
             language_candidates = entry[operation].get(
                 "language_candidates", None)
+            learner_duration = entry[operation].get(
+                "learner_duration", 0)
+            teacher_duration = entry[operation].get(
+                "teacher_duration", 0)
             language = entry.get(
                 operation, None).get("language")
             downloads.append({
@@ -49,6 +53,8 @@ def do_download(data, directory, operation):
                 "audio_path": audio_path,
                 "audio_separation_ref_path": audio_separation_ref_path,
                 "language_candidates": [language_candidates],
+                "learner_duration": learner_duration,
+                "teacher_duration": teacher_duration,
                 "language": language
             })
     return downloads
