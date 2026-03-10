@@ -1,17 +1,10 @@
 import string
 import os
 from collections import Counter
-import torch
-import librosa
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import whisper
 
-processor = WhisperProcessor.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
-model = WhisperForConditionalGeneration.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
-
-device = torch.device("cpu")
-model = model.to(device)
+model = whisper.load_model(
+    "large-v3-turbo", download_root="/apps/files/models/whisper")
 
 hallu_thresholds_definition = {
     1: 5,  # Unigrams - occuring 5 or more times
@@ -106,34 +99,30 @@ def guess_hallucination_text(asr_text):
 
 def transcribe(audio_file, language):
 
-    audio, sr = librosa.load(audio_file, sr=16000)
+    transcription_output = {}
 
-    inputs = processor(
-        audio,
-        sampling_rate=16000,
-        return_tensors="pt"
-    )
+    if language == 'en':
+        audio = whisper.load_audio(audio_file)
+        options = {
+            "language": language,
+            "task": "transcribe"
+        }
+        result = whisper.transcribe(model, audio, **options)
+        asr_text = result['text']
 
-    input_features = inputs.input_features.to(device)
+        hallu_score, hallu_text = hallucination_metrics(asr_text)
 
-    with torch.no_grad():
-        predicted_ids = model.generate(
-            input_features,
-            task="transcribe",
-            language=language
-        )
-
-    asr_text = processor.batch_decode(
-        predicted_ids,
-        skip_special_tokens=True
-    )[0]
-
-    hallu_score, hallu_text = hallucination_metrics(asr_text)
-
-    transcription_output = {
-        'asr_text': asr_text,
-        'hallu_score': hallu_score,
-        'hallu_text': hallu_text
-    }
+        transcription_output = {
+            'asr_text': asr_text,
+            'hallu_score': hallu_score,
+            'hallu_text': hallu_text
+        }
+    else:
+        # if language detection was not possible or was meaningless or if language was high probability Non English
+        transcription_output = {
+            'asr_text': '',
+            'hallu_score': 0,
+            'hallu_text': ''
+        }
 
     return {"transcription_output": transcription_output}
