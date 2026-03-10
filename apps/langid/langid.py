@@ -5,9 +5,9 @@ import librosa
 
 
 processor = WhisperProcessor.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
+    "/apps/files/models/whisper/medium")
 model = WhisperForConditionalGeneration.from_pretrained(
-    "/apps/files/models/whisper/large-v3-turbo")
+    "/apps/files/models/whisper/medium")
 
 device = torch.device("cpu")
 model = model.to(device)
@@ -70,9 +70,6 @@ def lang_detect_in_segments(audio, sr, language_tokens, segment_duration=30):
 def detect_languages(audio_path, language_candidates, learner_duration, teacher_duration, spreprocess=False):
 
     # edge case - no learner speech separated. no language to detect.
-    # TODO convert duration to number. requires model change.
-    learner_duration = int(learner_duration)
-    teacher_duration = int(teacher_duration)
     if (learner_duration == 0):
         languages_estimation = []
         lang_id = {}
@@ -107,7 +104,7 @@ def detect_languages(audio_path, language_candidates, learner_duration, teacher_
     for lang_code, prob in language_probabilities.items():
         lang_id = {}
         lang_id['language_code'] = lang_code
-        lang_id['confidence'] = round(prob, 2)
+        lang_id['confidence'] = round(prob, 1)
         languages_estimation.append(lang_id)
 
     return {"languages_estimation": languages_estimation}
