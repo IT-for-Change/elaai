@@ -33,7 +33,7 @@ def main(activity_id):
             logger.info(
                 f'Performing language check for submission {d["item_key"]} and entry {d["entry_key"]} with audio {d["audio_path"]}')
             languages_estimation = detect_languages(
-                d["audio_path"], d["language_candidates"])
+                d["audio_path"], d["language_candidates"], d["learner_duration"], d["teacher_duration"])  # passing learner duration to handle no speech edge case.
             logger.info(
                 f'Completed language check for submission {d["item_key"]} and entry {d["entry_key"]}')
             logger.info(languages_estimation)

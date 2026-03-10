@@ -5,9 +5,9 @@ import librosa
 
 
 processor = WhisperProcessor.from_pretrained(
-    "/apps/files/models/whisper/medium")
+    "/apps/files/models/whisper/large-v3-turbo")
 model = WhisperForConditionalGeneration.from_pretrained(
-    "/apps/files/models/whisper/medium")
+    "/apps/files/models/whisper/large-v3-turbo")
 
 device = torch.device("cpu")
 model = model.to(device)
@@ -67,8 +67,32 @@ def lang_detect_in_segments(audio, sr, language_tokens, segment_duration=30):
     return dict(overall_probs)
 
 
-def detect_languages(audio_path, language_candidates, spreprocess=False):
+def detect_languages(audio_path, language_candidates, learner_duration, teacher_duration, spreprocess=False):
 
+    # edge case - no learner speech separated. no language to detect.
+    # TODO convert duration to number. requires model change.
+    learner_duration = int(learner_duration)
+    teacher_duration = int(teacher_duration)
+    if (learner_duration == 0):
+        languages_estimation = []
+        lang_id = {}
+        # '-' character is used with this special meaning throughout ELA for lang code.
+        lang_id['language_code'] = '-'
+        lang_id['confidence'] = 1
+        languages_estimation.append(lang_id)
+        return {"languages_estimation": languages_estimation}
+
+    # doubtful case, likely insufficient info to determine language. so skip
+    if ((learner_duration * 1.5) < teacher_duration and learner_duration <= 10):
+        languages_estimation = []
+        lang_id = {}
+        # '-' character is used with this special meaning throughout ELA for lang code.
+        lang_id['language_code'] = '-'
+        lang_id['confidence'] = 0.75
+        languages_estimation.append(lang_id)
+        return {"languages_estimation": languages_estimation}
+
+    # non-zero learner duration.
     # add english!
     language_candidates.insert(0, 'en')
     language_tokens = [f'<|{code}|>' for code in language_candidates]
