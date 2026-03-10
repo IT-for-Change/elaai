@@ -148,8 +148,10 @@ def separate_speakers(audio_file, teacher_audio_sample_file):
             learner_max_duration = max(
                 turn_duration, learner_max_duration)
 
-    teacher_speech = torch.cat(teacher_speech_segments, dim=1)
-    learner_speech = torch.cat(learner_speech_segments, dim=1)
+    teacher_speech = torch.cat(
+        teacher_speech_segments, dim=1) if teacher_speech_segments else torch.empty(1, 0)
+    learner_speech = torch.cat(
+        learner_speech_segments, dim=1) if learner_speech_segments else torch.empty(1, 0)
 
     audio_path_teacher = audio_file.replace('.m4a', '_teacher_vad.wav')
     audio_path_learner = audio_file.replace('.m4a', '_learner_vad.wav')
