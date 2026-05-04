@@ -46,8 +46,7 @@ class Client:
         print(params)
         response = requests.post(self.remote_put_api_url,
                                  json=params, headers=headers)
-        response.raise_for_status()
-        print({response.text})
+        return response
 
     def send_file(self, file_path):
 

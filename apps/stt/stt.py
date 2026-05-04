@@ -2,6 +2,8 @@ import string
 import os
 from collections import Counter
 import whisper
+from loguru import logger
+from stt.util import compute_assist_text_comparison
 
 model = whisper.load_model(
     "large-v3-turbo", download_root="/apps/files/models/whisper")
@@ -97,32 +99,85 @@ def guess_hallucination_text(asr_text):
     return ''
 
 
-def transcribe(audio_file, language):
+# additional inputs and outputs needed in API from/to ELA Web:
+# inputs: text_assist, transcription reason, transcription_language_override_threshold
+# outputs: transcription_language_override, transcription_language_override_reason
+def transcribe(audio_file, language, text_assist, transcription_language_reason, transcription_language_override_threshold):
 
-    transcription_output = {}
+    transcription_output = {
+        'asr_text': '',
+        'hallu_score': 0,
+        'hallu_text': '',
+        'transcription_language_override': '',
+        'transcription_language_override_reason': '',
+        'text_assist_similarity_score': 0
+    }
 
-    if language == 'en':
+    transcription_language_override = ''
+    transcription_language_override_reason = ''
+    text_assist_similarity_score = 0
+
+    text_assist = text_assist.strip() if text_assist else None
+
+    if transcription_language_reason not in ['LANGID_NO_SPEECH', 'LANGID_INSUFFICIENT_SPEECH']:
+
+        if (transcription_language_reason not in ['LANGID_ELAAI_CONFIRMED_EN', 'LANGID_ELAAI_MIXED_EN']):
+            # force transcription language to 'en' and run comparison with assist text if supplied
+            # this logic is to handle some edge cases where the speech is human-detectable english but lang id detects a different language
+            # while transcription in english reflects speech in English.
+            # This can happen when accent is heaby and/or many non English nouns and proper nouns are used
+            # In such cases, the hint text comparison with transcribed text provides an extra check and enables override of langid.
+            # Careful not to overdo the comparison - we just need to detect a few common words between the transcribed text and the assist text
+
+            if (text_assist):
+                language = 'en'
+                logger.info(
+                    'Text assist available, so forcing transcription in \'en\' to explore possible langid override')
+            else:
+                # if not English and no text assist, currently no support for transcription. return the initialized empty output
+                return {"transcription_output": transcription_output}
+
         audio = whisper.load_audio(audio_file)
+
         options = {
             "language": language,
             "task": "transcribe"
         }
+
         result = whisper.transcribe(model, audio, **options)
         asr_text = result['text']
 
         hallu_score, hallu_text = hallucination_metrics(asr_text)
 
+        # Do text assist check only if configured and if not confirmed English by langid step
+        if (text_assist and transcription_language_reason != 'LANGID_ELAAI_CONFIRMED_EN'):
+
+            text_assist_similarity_score, common_words = compute_assist_text_comparison(
+                text_assist, asr_text)
+            logger.info(
+                f'Result from forced transcription: common words {common_words} and text assist similarity score {text_assist_similarity_score}')
+
+            if len(common_words) >= transcription_language_override_threshold:
+                # override language identified in langid but not the original confidence from lang id
+                # the confidence reported by lang id should/will be retained. It is a useful indicator of the nature of the speech.
+
+                transcription_language_override = 'en'
+                transcription_language_override_reason = transcription_language_reason + '_OVERRIDE'
+                logger.info(
+                    f'Override applied. Setting language to {transcription_language_override} with reason {transcription_language_override_reason}')
+            else:
+                logger.info(
+                    f'Override not applied. Language remains {language} with reason {transcription_language_reason}')
+
         transcription_output = {
             'asr_text': asr_text,
             'hallu_score': hallu_score,
-            'hallu_text': hallu_text
+            'hallu_text': hallu_text,
+            'transcription_language_override': transcription_language_override,
+            'transcription_language_override_reason': transcription_language_override_reason,
+            'text_assist_similarity_score': text_assist_similarity_score
         }
     else:
-        # if language detection was not possible or was meaningless or if language was high probability Non English
-        transcription_output = {
-            'asr_text': '',
-            'hallu_score': 0,
-            'hallu_text': ''
-        }
+        logger.info('No speech or insufficient speech to transcribe')
 
     return {"transcription_output": transcription_output}

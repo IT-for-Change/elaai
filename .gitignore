@@ -1,9 +1,10 @@
 **/__pycache__/
-/apps/file
+/apps/files/**
 /apps/files/log/*
 /apps/files/logs/*
 /apps/files/submissions/*
 /apps/files/models/pyannote/**
+/apps/sdz/test/**
 /apps/files/models/whisper/**
 /apps/langid/test/**
 /apps/stt/test/**
