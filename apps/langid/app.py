@@ -7,6 +7,7 @@ from loguru import logger
 from ela import client as ela_client
 from ela import util as ela_util
 from langid.langid import detect_languages
+from langid.langdetect2 import run_language_detection
 
 OPERATION = "langid"
 
@@ -24,30 +25,30 @@ def main(activity_id):
     # important to maintain live context using 'with' for temp directories/files
     with tempfile.TemporaryDirectory() as tmp_dir:
 
-        # download all audio files first, then transcribe in a loop
+        # download all audio files first, then process in a loop
         downloads = ela_util.do_download(data, tmp_dir, OPERATION)
 
         outputs = []
-        # after all audio files downloaded, run speaker diarization for each
+        # after all audio files downloaded, run lang id for each
         for d in downloads:
             logger.info(
                 f'Performing language check for submission {d["item_key"]} and entry {d["entry_key"]} with audio {d["audio_path"]}')
-            languages_estimation = detect_languages(
-                d["audio_path"], d["language_candidates"], d["learner_duration"], d["teacher_duration"])  # passing learner duration to handle no speech edge case.
+            lang_detection_output = run_language_detection(
+                d["audio_path"], d["learner_duration"])  # passing learner duration to handle no speech edge case.
             logger.info(
                 f'Completed language check for submission {d["item_key"]} and entry {d["entry_key"]}')
-            logger.info(languages_estimation)
+            logger.info(lang_detection_output)
 
             outputs.append({
                 "item_key": d["item_key"],
                 "entry_key": d["entry_key"],
-                "langid": languages_estimation
+                "langid": lang_detection_output
             })
 
             # if len(outputs) > 1:
             #   break
 
-        # print(outputs)
+        print(outputs)
         api_client.put_data(outputs, OPERATION)
 
 

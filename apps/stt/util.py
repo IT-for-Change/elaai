@@ -1,83 +1,33 @@
-import spacy
-
-# Load English model
-nlp = spacy.load('en_core_web_trf')
-
-ELA_STOPWORDS = {
-    # articles
-    "a", "an", "the",
-
-    # pronouns
-    "i", "me", "my", "mine",
-    "you", "your", "yours",
-    "he", "him", "his",
-    "she", "her", "hers",
-    "it", "its",
-    "we", "us", "our", "ours",
-    "they", "them", "their", "theirs",
-
-    # auxiliary verbs
-    "am", "is", "are", "was", "were",
-    "be", "been", "being",
-    "have", "has", "had",
-    "do", "does", "did",
-
-    # conjunctions
-    "and", "or", "but", "so",
-
-    # prepositions (minimal)
-    "in", "on", "at", "of", "to", "for", "by", "with",
-
-    # determiners
-    "this", "that", "these", "those",
-
-    # common question words
-    "what", "when", "why", "where", "which", "how", "whose"
-
-    # common Whisper hallucinations
-    "thank", "thank you", "subscribe", "channel", "click"
-}
+import numpy as np
+from ast import literal_eval
 
 
-def preprocess(text):
-    doc = nlp(text)
+def extract_en_audio(audio, langid_chunk_data, logit_threshold=0.6):
 
-    tokens = []
-    for token in doc:
-        lemma = token.lemma_.lower()
-        if (
-            lemma not in ELA_STOPWORDS and      # remove stopwords
-            not token.is_punct and     # remove punctuation
-            not token.is_space         # remove spaces
-        ):
-            tokens.append(lemma)
+    sample_rate = 16000
+    selected_audio = []
 
-    return tokens
+    current_time = 0.0
 
+    langid_chunk_data = literal_eval(langid_chunk_data)
 
-def jaccard_similarity(text1, text2):
-    words1 = preprocess(text1)
-    words2 = preprocess(text2)
+    for chunk_number, duration, language, logit, *_ in langid_chunk_data:
 
-    set1 = set(words1)
-    set2 = set(words2)
-    intersection = set1 & set2
-    union = set1 | set2
+        start_time = current_time
+        end_time = current_time + duration
 
-    similarity = len(intersection) / len(union) if union else 0
+        if language == "en" and logit >= logit_threshold:
 
-    return round(similarity, 2), intersection
+            start_sample = round(start_time * sample_rate)
+            end_sample = round(end_time * sample_rate)
 
+            chunk_audio = audio[start_sample:end_sample]
 
-def compute_assist_text_comparison(reference_text, asr_text):
-    similarity_score, common_words = jaccard_similarity(
-        reference_text, asr_text)
-    return similarity_score, common_words
+            selected_audio.append(chunk_audio)
 
+        current_time = end_time
 
-'''
-# Example
-ref = "This is a long paragraph containing several words and concepts."
-# short = "This paragraph has some words."
-short = "This paragraph has some words containing words and concepts."
-'''
+    if not selected_audio:
+        return None
+
+    return np.concatenate(selected_audio).astype(np.float32)

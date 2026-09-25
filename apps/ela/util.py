@@ -45,14 +45,16 @@ def do_download(data, directory, operation):
                 "learner_duration", 0)
             teacher_duration = entry[operation].get(
                 "teacher_duration", 0)
-            text_assist = entry[operation].get(
-                "text_assist", None)
-            transcription_language_override_threshold = entry[operation].get(
-                "transcription_language_override_threshold", 0)
-            transcription_language_reason = entry[operation].get(
-                "transcription_language_reason", None)
             language = entry.get(
                 operation, None).get("language")
+            text_assist = entry[operation].get(
+                "text_assist", None)
+            langid_remark = entry[operation].get(
+                "langid_remark", None)
+            langid_score = entry[operation].get(
+                "langid_score", None)
+            langid_decision_data = entry[operation].get(
+                "langid_decision_data", None)
             downloads.append({
                 "item_key": item_key,
                 "entry_key": entry["key"],
@@ -63,8 +65,9 @@ def do_download(data, directory, operation):
                 "teacher_duration": teacher_duration,
                 "language": language,
                 "text_assist": text_assist,
-                "transcription_language_reason": transcription_language_reason,
-                "transcription_language_override_threshold": transcription_language_override_threshold
+                "langid_remark":langid_remark,
+                "langid_score": langid_score,
+                "langid_decision_data": langid_decision_data
             })
     return downloads
 

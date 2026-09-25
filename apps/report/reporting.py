@@ -1,6 +1,26 @@
 import json
 from collections import defaultdict
 
+# maps (language score, speech score): 16pt score
+# 0 is no speech, default.
+sixteen_point_score_matrix = {
+    (1, 1): 1,
+    (1, 2): 2,
+    (1, 3): 3,
+    (2, 1): 4,
+    (2, 2): 5,
+    (2, 3): 6,
+    (3, 1): 7,
+    (3, 2): 8,
+    (3, 3): 9,
+    (4, 1): 10,
+    (4, 2): 11,
+    (4, 3): 12,
+    (5, 1): 13,
+    (5, 2): 14,
+    (5, 3): 15,
+}
+
 
 def report_from_text_analysis(json_str: str):
     data = json.loads(json_str)
@@ -73,57 +93,28 @@ def get_estimated_word_count(learner_duration):
         return int(2 * learner_duration)
 
 
-def calc_nine_point_score(transcription_language, transcription_language_reason, word_count, learner_duration):
+def calc_sixteen_point_score(transcription_language, langid_score, word_count, learner_duration):
 
-    score = 0
+    language_score = langid_score  # just copy as-is.
+    speech_score = 0
 
-    if transcription_language == 'en' and transcription_language_reason == 'LANGID_ELAAI_CONFIRMED_EN':
-        if (0 < word_count <= 10):
-            score = 7
-        if (10 < word_count <= 25):
-            score = 8
-        if (word_count > 25):
-            score = 9
-        return score
-
-    if transcription_language == 'en' and transcription_language_reason == 'LANGID_ELAAI_MIXED_EN':
-        if (0 < word_count <= 10):
-            score = 4
-        if (11 < word_count <= 25):
-            score = 5
-        if (word_count > 25):
-            score = 6
-        return score
-
-    if transcription_language != 'en' and transcription_language_reason == 'LANGID_ELAAI_MIXED_OTHER':
+    if transcription_language != "en":
         word_count = get_estimated_word_count(learner_duration)
-        if (0 < word_count <= 10):
-            score = 4
-        if (11 < word_count <= 25):
-            score = 5
-        if (word_count > 25):
-            score = 6
-        return score
 
-    if transcription_language != 'en' and transcription_language_reason == 'LANGID_ELAAI_CONFIRMED_OTHER':
-        word_count = get_estimated_word_count(learner_duration)
-        if (0 < word_count <= 10):
-            score = 1
-        if (11 < word_count <= 25):
-            score = 2
-        if (word_count > 25):
-            score = 3
-        return score
+    if (0 < word_count <= 10):
+        speech_score = 1
+    elif (10 < word_count <= 25):
+        speech_score = 2
+    elif (word_count > 25):
+        speech_score = 3
+    else:
+        speech_score = 0
 
-    if transcription_language_reason == 'LANGID_NO_SPEECH':
-        score = 0
-        return score
+    print(f'{language_score}, {speech_score}')
+    sixteen_point_score = sixteen_point_score_matrix[(
+        language_score, speech_score)]
 
-    if transcription_language_reason == 'LANGID_INSUFFICIENT_SPEECH':
-        score = 1
-        return score
-
-    return score
+    return sixteen_point_score
 
 
 def calc_conversation_contribution(learner_duration, teacher_duration):
@@ -142,20 +133,21 @@ def calc_conversation_contribution(learner_duration, teacher_duration):
 def do_report(report_inputs):
     # print(report_inputs)
     transcription_language = report_inputs['transcription_language']
-    transcription_language_reason = report_inputs['transcription_language_reason']
+    transcription_language_remark = report_inputs['transcription_language_remark']
+    langid_score = report_inputs["langid_score"]
     word_count = report_inputs['word_count']
     lexical_density = report_inputs['lexical_density']
     learner_duration = report_inputs['learner_duration']
     teacher_duration = report_inputs['teacher_duration']
-    nine_point_score = calc_nine_point_score(
-        transcription_language, transcription_language_reason, word_count, learner_duration)
+    sixteen_point_score = calc_sixteen_point_score(
+        transcription_language, langid_score, word_count, learner_duration)
     conversation_contribution_pct = calc_conversation_contribution(
         learner_duration, teacher_duration)
     totals = report_from_text_analysis(report_inputs['text_analysis'])
     counts = count_word_lengths(report_inputs['text_analysis'])
 
     report_outputs = {
-        'nine_point_score': nine_point_score,
+        'sixteen_point_score': sixteen_point_score,
         'lexical_density': lexical_density,
         'word_count': word_count,
         'conversation_contribution_pct': conversation_contribution_pct,

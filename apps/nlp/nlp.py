@@ -3,9 +3,10 @@ import string
 import csv
 import spacy
 from nlp import nlp_functions as nlpfunc
+from nlp.util import compute_assist_text_comparison
 
 
-def analyze_text(asr_text, language_code, check_grammar):
+def analyze_text(asr_text, text_assist, language_code, check_grammar):
 
     translator = str.maketrans('', '', string.punctuation)
     tokens = asr_text.translate(translator).lower().split()
@@ -38,5 +39,12 @@ def analyze_text(asr_text, language_code, check_grammar):
         analyzed_text['morphological_analysis'] = morphological_analysis
         analyzed_text['semantic_analysis'] = semantic_analysis
         analyzed_text['grammar_analysis'] = grammar_analysis
+        
+        if (text_assist):
+            text_assist_similarity_score, common_words = compute_assist_text_comparison(
+                    text_assist, asr_text)
+            analyzed_text["text_assist_common_words"] = common_words
+            analyzed_text["text_assist_similarity_score"] = text_assist_similarity_score
+            #logger.info(f'Result from text-assist scoring: common words {common_words} and text assist similarity score {text_assist_similarity_score}')
 
     return {"analyzed_text": analyzed_text}

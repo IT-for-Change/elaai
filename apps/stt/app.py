@@ -32,7 +32,7 @@ def main(activity_id):
             logger.info(
                 f'Performing transcription for submission {d["item_key"]} and entry {d["entry_key"]} in language {d["language"]} using {d["audio_path"]}')
             transcription_output = transcribe(
-                d["audio_path"], d["language"], d["text_assist"], d["transcription_language_reason"], d["transcription_language_override_threshold"])
+                d["audio_path"], d["language"], d["langid_score"], d["langid_remark"], d["langid_decision_data"], d["text_assist"])
             logger.info(
                 f'Completed transcription for submission {d["item_key"]} and entry {d["entry_key"]}')
             logger.info(transcription_output)

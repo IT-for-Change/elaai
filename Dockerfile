@@ -17,10 +17,31 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Upgrade tooling
 RUN pip install --no-cache-dir -U pip setuptools wheel
 
-# Install CPU-only torch first
-RUN pip install --no-cache-dir \
-    torch --index-url https://download.pytorch.org/whl/cpu
+# --------------------------------------------------
+# PyTorch CPU stack
+# --------------------------------------------------
 
+RUN pip install --no-cache-dir \
+    torch==2.10.0+cpu \
+    torchaudio==2.10.0+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+    
+# --------------------------------------------------
+# Other known-good ML/audio versions
+# --------------------------------------------------
+
+RUN pip install --no-cache-dir \
+    torchcodec==0.10.0
+
+
+# --------------------------------------------------
+# ONNX + Silero VAD
+# --------------------------------------------------
+
+RUN pip install --no-cache-dir \
+    onnxruntime==1.23.2 \
+    silero-vad==6.2.0
+    
 # Install remaining Python dependencies
 RUN pip install --no-cache-dir \
     openai-whisper \
@@ -40,10 +61,8 @@ RUN pip install --no-cache-dir \
     pydub \
     librosa
 
-RUN pip install --no-cache-dir loguru
-RUN pip install --no-cache-dir \
-    torchaudio --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir silero-vad
+RUN pip install --no-cache-dir loguru \
+    lemminflect
 
 # Cleanup, just in case!
 RUN rm -rf /root/.cache/pip
