@@ -6,7 +6,7 @@ import json
 from loguru import logger
 from ela import client as ela_client
 from ela import util as ela_util
-from langid.langid import detect_languages
+# from langid.langid import detect_languages
 from langid.langdetect2 import run_language_detection
 
 OPERATION = "langid"
