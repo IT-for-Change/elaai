@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+import ast
 
 # maps (language score, speech score): 16pt score
 # 0 is no speech, default.
@@ -49,12 +50,29 @@ def report_from_text_analysis(json_str: str):
 
     # Sum syntactic counts
     for item in syntactic_items:
-        totals["total_prepositions"] += item.get("total_prepositions", 0)
+        totals["total_prepositions"] += item.get("count_of_prepositions", 0)
         totals["total_noun_phrases"] += item.get("count_of_noun_phrases", 0)
         totals["total_clause_fragments"] += item.get(
             "count_of_clause_fragments", 0)
 
     return totals
+
+
+def get_grammar_check_info(json_str: str):
+    data = json.loads(json_str)
+
+    grammar_items = data.get("grammar_analysis", [])
+    error_types = []
+    error_context_hint = []
+    details = []
+
+    for item in grammar_items:
+        error_info = item[1].split('|')
+        error_types.append(error_info[0])
+        error_context_hint.append(error_info[1])
+        details.append(item[0])
+
+    return error_types, error_context_hint, details
 
 
 def count_word_lengths(json_str: str):
@@ -82,24 +100,19 @@ def count_word_lengths(json_str: str):
     return counts
 
 
-def get_estimated_word_count(learner_duration):
-    if (learner_duration <= 10):  # this will never happen as long as this is flagged as LANGID_INSUFFICIENT_SPEECH upstream
-        return int(0.5 * learner_duration)  # 30 words per minute
-    if (10 < learner_duration <= 20):
-        return int(1 * learner_duration)
-    if (20 < learner_duration <= 30):
-        return int(1.5 * learner_duration)
-    if (learner_duration > 30):
-        return int(2 * learner_duration)
-
-
-def calc_sixteen_point_score(transcription_language, langid_score, word_count, learner_duration):
+def calc_sixteen_point_score(transcription_language, langid_score, en_word_count, est_non_en_word_count):
 
     language_score = langid_score  # just copy as-is.
     speech_score = 0
+    word_count = 0
 
-    if transcription_language != "en":
-        word_count = get_estimated_word_count(learner_duration)
+    # for language identified non_en or mix,
+    # use the estimate to calculate total word count.
+    # this is solely for calculating 16pt score.
+    if transcription_language == "en":
+        word_count = en_word_count
+    else:
+        word_count = est_non_en_word_count
 
     if (0 < word_count <= 10):
         speech_score = 1
@@ -130,26 +143,49 @@ def calc_conversation_contribution(learner_duration, teacher_duration):
     return conversation_contribution_pct
 
 
+def get_remark_summary(transcription_language_remark):
+
+    transcription_language_remark = ast.literal_eval(
+        transcription_language_remark)
+    remark_type_count = len(transcription_language_remark)
+
+    if remark_type_count <= 2:
+        return list(transcription_language_remark.keys())
+
+    if remark_type_count == 3:
+        keys = [key for key, value in transcription_language_remark.items()
+                if value > 1]
+        return keys if keys else list(transcription_language_remark.keys())
+
+    if remark_type_count == 4:
+        return [key for key, value in transcription_language_remark.items() if value >= 2]
+
+    return [key for key, value in transcription_language_remark.items() if value > 2]
+
+
 def do_report(report_inputs):
-    # print(report_inputs)
     transcription_language = report_inputs['transcription_language']
     transcription_language_remark = report_inputs['transcription_language_remark']
     langid_score = report_inputs["langid_score"]
-    word_count = report_inputs['word_count']
+    en_word_count = report_inputs['en_word_count']
+    est_non_en_word_count = report_inputs['est_non_en_word_count']
     lexical_density = report_inputs['lexical_density']
     learner_duration = report_inputs['learner_duration']
     teacher_duration = report_inputs['teacher_duration']
+    remark_summary = get_remark_summary(transcription_language_remark)
     sixteen_point_score = calc_sixteen_point_score(
-        transcription_language, langid_score, word_count, learner_duration)
+        transcription_language, langid_score, en_word_count, est_non_en_word_count)
     conversation_contribution_pct = calc_conversation_contribution(
         learner_duration, teacher_duration)
     totals = report_from_text_analysis(report_inputs['text_analysis'])
     counts = count_word_lengths(report_inputs['text_analysis'])
+    grammar_error_types, grammar_error_context_hint, grammar_error_details = get_grammar_check_info(
+        report_inputs['text_analysis'])
 
     report_outputs = {
         'sixteen_point_score': sixteen_point_score,
+        'remark_summary': str(remark_summary),
         'lexical_density': lexical_density,
-        'word_count': word_count,
         'conversation_contribution_pct': conversation_contribution_pct,
         'total_nouns': totals["total_nouns"],
         'total_proper_nouns': totals["total_proper_nouns"],
@@ -168,7 +204,10 @@ def do_report(report_inputs):
         'eight_letter_words': counts[8],
         'nine_letter_words': counts[9],
         'ten_letter_words': counts[10],
-        'greater_than_10_letter_words': counts["gt_10"]
+        'greater_than_10_letter_words': counts["gt_10"],
+        'grammar_error_types': str(grammar_error_types),
+        'grammar_error_context_hint': str(grammar_error_context_hint),
+        'grammar_error_details': str(grammar_error_details)
     }
 
     return {"report_outputs": report_outputs}
