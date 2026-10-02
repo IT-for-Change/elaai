@@ -91,3 +91,14 @@ def compute_assist_text_comparison(text_assist, asr_text):
     text_assist_similarity_score, common_words = check_similarity(
         text_assist, asr_text)
     return round(text_assist_similarity_score, 0), list(common_words)
+
+
+def get_estimated_word_count(learner_duration):
+    if (learner_duration <= 10):  # this will never happen as long as this is flagged as LANGID_INSUFFICIENT_SPEECH upstream
+        return int(0.5 * learner_duration)  # 30 words per minute
+    if (10 < learner_duration <= 20):
+        return int(1 * learner_duration)
+    if (20 < learner_duration <= 30):
+        return int(1.5 * learner_duration)
+    if (learner_duration > 30):
+        return int(2 * learner_duration)

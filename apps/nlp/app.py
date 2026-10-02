@@ -33,12 +33,13 @@ def main(activity_id):
             asr_text = entry[OPERATION]['source']
             text_assist = entry[OPERATION]['text_assist']
             language_code = entry[OPERATION]['language']
+            learner_duration = entry[OPERATION]['learner_duration']
             check_grammar = entry[OPERATION]['grammar']
             logger.info(
                 f'Performing text analysis for submission {item_key} and entry {entry["key"]} in language {language_code}')
             logger.info(f'ASR TEXT: {asr_text}')
             analyzed_text = analyze_text(
-                asr_text, text_assist, language_code, check_grammar)
+                asr_text, text_assist, language_code, learner_duration, check_grammar)
             logger.info(
                 f'Completed text analysis for submission {item_key} and entry {entry["key"]}')
             logger.info(analyzed_text)
