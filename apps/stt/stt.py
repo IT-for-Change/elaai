@@ -6,8 +6,7 @@ from loguru import logger
 from stt.util import extract_en_audio
 
 
-model = whisper.load_model(
-    "large-v3-turbo", download_root="/apps/files/models/whisper")
+model = whisper.load_model("/apps/files/models/whisper/large-v3-turbo.pt")
 
 hallu_thresholds_definition = {
     1: 5,  # Unigrams - occuring 5 or more times

@@ -1,3 +1,4 @@
+from happytransformer import HappyTextToText, TTSettings
 from collections import Counter
 import csv
 import spacy
@@ -6,6 +7,8 @@ import pyphen
 # logger.info(f'Initializing NLP model. Loading {config.ELA_NLP_MODEL}')
 _nlp = spacy.load('en_core_web_trf')
 _dic = pyphen.Pyphen(lang='en')
+# initialized here to check later for lazy loading but one-time only.
+happy_tt = HappyTextToText("T5", "/apps/files/models/vennify/")
 # logger.info('NLP model loaded')
 
 
@@ -435,16 +438,13 @@ def do_grammar_check(happy_tt, args, sentence):
         if (e.type in ['R:ORTH', 'R:SPELL', 'R:OTHER']):
             continue
         # corrections += f'{e.type}|{sentence[e.o_start:e.o_end]}|hint: {corr_text}?\n'
-        corrections += f'{e.type}|{sentence[e.o_start:e.o_end]}|'
+        corrections += f'{e.type}|{sentence[e.o_start:e.o_end]}'
 
     return corrections
 
 
 def analyze_grammar(doc):
 
-    from happytransformer import HappyTextToText, TTSettings
-
-    happy_tt = HappyTextToText("T5", settings.models.ELA_GRAM_MODEL_EN_T5)
     args = TTSettings(num_beams=5, min_length=1)
 
     sentences = list(doc.sents)
