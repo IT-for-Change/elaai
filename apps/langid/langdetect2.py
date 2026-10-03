@@ -184,7 +184,7 @@ def run_language_detection(audio_file, learner_duration):
         "langid_decision_data": "",
         "decision": "not_en",
         "score": 1,
-        "remark": "101",
+        "remark": "",
         "confidence": "H"
     }
 
@@ -193,7 +193,7 @@ def run_language_detection(audio_file, learner_duration):
         # '-' character is used with this special meaning throughout ELA for lang code.
         lang_detection_output['decision'] = '-'
         lang_detection_output['score'] = 0 if learner_duration == 0 else 1
-        lang_detection_output['remark'] = "001"
+        lang_detection_output['remark'] = "{999:1}"
         lang_detection_output['confidence'] = "H"
         return {"language_identification": lang_detection_output}
 

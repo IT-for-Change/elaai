@@ -5,6 +5,8 @@ import ast
 # maps (language score, speech score): 16pt score
 # 0 is no speech, default.
 sixteen_point_score_matrix = {
+    (0, 0): 0,
+    (1, 0): 1, #edge case-insufficient speech for langid
     (1, 1): 1,
     (1, 2): 2,
     (1, 3): 3,
