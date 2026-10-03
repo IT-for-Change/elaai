@@ -184,17 +184,17 @@ def run_language_detection(audio_file, learner_duration):
         "langid_decision_data": "",
         "decision": "not_en",
         "score": 1,
-        "remark": "000",
+        "remark": "101",
         "confidence": "H"
     }
 
     # edge case - no learner speech separated. no language to detect.
-    if (learner_duration == 0):
-
+    if (learner_duration <= 5):
         # '-' character is used with this special meaning throughout ELA for lang code.
         lang_detection_output['decision'] = '-'
+        lang_detection_output['score'] = 0 if learner_duration == 0 else 1
+        lang_detection_output['remark'] = "001"
         lang_detection_output['confidence'] = "H"
-
         return {"lang_detection_output": lang_detection_output}
 
     lang_id_raw_output = process_audio(audio_file)
