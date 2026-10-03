@@ -195,7 +195,7 @@ def run_language_detection(audio_file, learner_duration):
         lang_detection_output['score'] = 0 if learner_duration == 0 else 1
         lang_detection_output['remark'] = "001"
         lang_detection_output['confidence'] = "H"
-        return {"lang_detection_output": lang_detection_output}
+        return {"language_identification": lang_detection_output}
 
     lang_id_raw_output = process_audio(audio_file)
 
