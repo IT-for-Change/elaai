@@ -128,7 +128,7 @@ def transcribe(audio_file, transcription_language, langid_score, langid_remark, 
             "Mixed language use detected. Attempting to extract English-only segments for partial transcription")
         audio = extract_en_audio(
             audio, langid_decision_data, logit_threshold=0.6)
-        if not audio.any():
+        if audio is None or not audio.any():
             logger.info("Doubtful English segments. Skipping transcription")
             return {"transcription_output": transcription_output}
         else:
