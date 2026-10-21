@@ -102,3 +102,24 @@ def get_estimated_word_count(learner_duration):
         return int(1.5 * learner_duration)
     if (learner_duration > 30):
         return int(2 * learner_duration)
+
+
+def get_speech_score_by_wordcount(language_code, en_token_count, est_non_en_word_count):
+
+    word_count = 0
+    speech_score = 0
+    if transcription_language == "en":
+        word_count = en_token_count
+    else:
+        word_count = est_non_en_word_count
+
+    if (0 < word_count <= 10):
+        speech_score = 1
+    elif (10 < word_count <= 25):
+        speech_score = 2
+    elif (word_count > 25):
+        speech_score = 3
+    else:
+        speech_score = 0
+
+    return speech_score

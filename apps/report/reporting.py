@@ -6,7 +6,7 @@ import ast
 # 0 is no speech, default.
 sixteen_point_score_matrix = {
     (0, 0): 0,
-    (1, 0): 1, #edge case-insufficient speech for langid
+    (1, 0): 1,  # edge case-insufficient speech for langid
     (1, 1): 1,
     (1, 2): 2,
     (1, 3): 3,
@@ -104,30 +104,9 @@ def count_word_lengths(json_str: str):
 
 def calc_sixteen_point_score(transcription_language, langid_score, en_word_count, est_non_en_word_count):
 
-    language_score = langid_score  # just copy as-is.
-    speech_score = 0
-    word_count = 0
-
-    # for language identified non_en or mix,
-    # use the estimate to calculate total word count.
-    # this is solely for calculating 16pt score.
-    if transcription_language == "en":
-        word_count = en_word_count
-    else:
-        word_count = est_non_en_word_count
-
-    if (0 < word_count <= 10):
-        speech_score = 1
-    elif (10 < word_count <= 25):
-        speech_score = 2
-    elif (word_count > 25):
-        speech_score = 3
-    else:
-        speech_score = 0
-
     print(f'{language_score}, {speech_score}')
     sixteen_point_score = sixteen_point_score_matrix[(
-        language_score, speech_score)]
+        langid_score, speech_score)]
 
     return sixteen_point_score
 
@@ -169,14 +148,14 @@ def do_report(report_inputs):
     transcription_language = report_inputs['transcription_language']
     transcription_language_remark = report_inputs['transcription_language_remark']
     langid_score = report_inputs["langid_score"]
+    speech_score = report_inputs["speech_score"]
     en_word_count = report_inputs['en_word_count']
     est_non_en_word_count = report_inputs['est_non_en_word_count']
     lexical_density = report_inputs['lexical_density']
     learner_duration = report_inputs['learner_duration']
     teacher_duration = report_inputs['teacher_duration']
     remark_summary = get_remark_summary(transcription_language_remark)
-    sixteen_point_score = calc_sixteen_point_score(
-        transcription_language, langid_score, en_word_count, est_non_en_word_count)
+    sixteen_point_score = calc_sixteen_point_score(langid_score, speech_score)
     conversation_contribution_pct = calc_conversation_contribution(
         learner_duration, teacher_duration)
     totals = report_from_text_analysis(report_inputs['text_analysis'])

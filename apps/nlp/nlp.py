@@ -19,10 +19,18 @@ def analyze_text(asr_text, text_assist, language_code, learner_duration, check_g
     if language_code in ['not_en', 'mix']:
         est_non_en_word_count = get_estimated_word_count(learner_duration)
 
+    # Speech score calculation is done here not in STT.
+    # The calculation involves an element of guessing for non english
+    # based on typical words-per-minute score, which is more in the realm
+    # of NLP than speech to text.
+    speech_score = get_speech_score_by_wordcount(
+        language_code, en_token_count, est_non_en_word_count)
+
     # initialize with the minimum output of the analysis.
     analyzed_text = {
         'en_token_count': en_token_count,
         'est_non_en_word_count': est_non_en_word_count,  # will be 0 for en.
+        'speech_score': speech_score,
         'lang_code': language_code,
         'lexical_density': 0,
         'lexical_analysis': '',
