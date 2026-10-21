@@ -8,7 +8,7 @@ from stt.util import extract_en_audio
 
 model = whisper.load_model("/apps/files/models/whisper/large-v3-turbo.pt")
 
-hallu_thresholds_definition = {
+hallu_thresholds_definition_type1 = {
     1: 5,  # Unigrams - occuring 5 or more times
     2: 5,  # Bigrams - occuring 5 or more times
     3: 3,  # Trigrams - occuring 3 or more times
@@ -23,12 +23,14 @@ hallu_thresholds_definition = {
 
 
 def hallucination_metrics(text):
-    hallu_score, hallu_tokens = detect_hallucination(text)
-    return hallu_score, hallu_tokens
+    hallu_score_type1 = detect_hallucination_type1(text)
+    hallu_score_type2 = detect_hallucination_type2(
+        text, word_count_outlier_threshold)
+    return hallu_score_type1, hallu_score_type2
 
 
 def get_n_gram_sets(tokens):
-    max_n_gram_sets_to_make = len(hallu_thresholds_definition)
+    max_n_gram_sets_to_make = len(hallu_thresholds_definition_type1)
     # Step 2: Generate n-grams for each n from 1 to max_n_gram
     ngrams = {}
     for n in range(1, max_n_gram_sets_to_make + 1):
@@ -71,7 +73,7 @@ def tokens_from_text(text):
     return tokens
 
 
-def detect_hallucination(text):
+def detect_hallucination_type1(text):
 
     total_hallu_tokens = 0
     max_n_gram_sets_to_make = len(hallu_thresholds_definition)
@@ -86,30 +88,33 @@ def detect_hallucination(text):
             total_hallu_tokens = sum(len(s.split()) for s in hallu_tokens)
             # next, apply correction factor to include the first occurrence since hallucination is confirmed
             total_hallu_tokens += n
-            # this breaking out at the first n-gram match for hallucination makes the assumption
-            # that there are not goingto be different regions of hallucinations in the
-            # transcription involving different sets of word tokens. assumption to be revisited.
             break
 
-    hallu_score = (total_hallu_tokens * 100) // len(tokens)
-    return hallu_score, hallu_tokens
+    hallu_score_type1 = (total_hallu_tokens * 100) // len(tokens)
+    return hallu_score_type1
+
+
+def detect_hallucination_type2(text, word_count_outlier_threshold):
+    hallu_score_type2 = 0
+    tokens = tokens_from_text(text)
+    return 100 if len(word_count) > word_count_outlier_threshold else 0
 
 
 def guess_hallucination_text(asr_text):
     return ''
 
 
-def transcribe(audio_file, transcription_language, langid_score, langid_remark, langid_decision_data, text_assist):
+def transcribe(audio_file, transcription_language, langid_score, langid_remark, langid_decision_data, text_assist, word_count_outlier_threshold):
 
     asr_text = ''
-    hallu_score = 0
-    hallu_text = ''
+    hallu_score_type1 = 0
+    hallu_score_type2 = 0
     audio = None
 
     transcription_output = {
         'asr_text': asr_text,
-        'hallu_score': hallu_score,
-        'hallu_text': hallu_text,
+        'hallu_score_type1': hallu_score_type1,
+        'hallu_score_type2': hallu_score_type2,
         'transcription_language': transcription_language
     }
 
@@ -144,12 +149,13 @@ def transcribe(audio_file, transcription_language, langid_score, langid_remark, 
     result = whisper.transcribe(model, audio, **options)
     asr_text = result['text']
 
-    hallu_score, hallu_text = hallucination_metrics(asr_text)
+    hallu_score_type1, hallu_text_type1, hallu_score_type2 = hallucination_metrics(
+        asr_text, word_count_outlier_threshold)
 
     transcription_output = {
         'asr_text': asr_text,
-        'hallu_score': hallu_score,
-        'hallu_text': hallu_text,
+        'hallu_score_type1': hallu_score_type1,
+        'hallu_score_type2': hallu_score_type2,
         'transcription_language': transcription_language,
     }
 

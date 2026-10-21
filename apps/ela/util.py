@@ -55,6 +55,8 @@ def do_download(data, directory, operation):
                 "langid_score", None)
             langid_decision_data = entry[operation].get(
                 "langid_decision_data", None)
+            word_count_outlier_threshold = entry[operation].get(
+                "word_count_outlier_threshold", 0)
             downloads.append({
                 "item_key": item_key,
                 "entry_key": entry["key"],
@@ -65,9 +67,10 @@ def do_download(data, directory, operation):
                 "teacher_duration": teacher_duration,
                 "language": language,
                 "text_assist": text_assist,
-                "langid_remark":langid_remark,
+                "langid_remark": langid_remark,
                 "langid_score": langid_score,
-                "langid_decision_data": langid_decision_data
+                "langid_decision_data": langid_decision_data,
+                "word_count_outlier_threshold": word_count_outlier_threshold
             })
     return downloads
 
